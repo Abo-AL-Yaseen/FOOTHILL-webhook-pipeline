@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ActionType {
+  UPPERCASE_TEXT
+  ADD_TIMESTAMP
+  EXTRACT_FIELD
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum DeliveryStatus {
+  SUCCESS
+  FAILED
+}
+
+model Pipeline {
+  id           String       @id @default(cuid())
+  name         String
+  webhookKey   String       @unique
+  actionType   ActionType
+  actionConfig Json?
+  secret       String?
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  subscribers  Subscriber[]
+  jobs         Job[]
+
+  @@map("pipelines")
+}
+
+model Subscriber {
+  id         String            @id @default(cuid())
+  pipelineId String
+  targetUrl  String
+  active     Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  pipeline   Pipeline          @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  deliveries DeliveryAttempt[]
+
+  @@map("subscribers")
+}
+
+model Job {
+  id               String            @id @default(cuid())
+  pipelineId       String
+  rawPayload       Json
+  processedPayload Json?
+  status           JobStatus         @default(PENDING)
+  errorMessage     String?
+  receivedAt       DateTime          @default(now())
+  processedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  pipeline         Pipeline          @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  deliveries       DeliveryAttempt[]
+
+  @@map("jobs")
+}
+
+model DeliveryAttempt {
+  id                 String         @id @default(cuid())
+  jobId              String
+  subscriberId       String
+  attemptNumber      Int
+  status             DeliveryStatus
+  responseStatusCode Int?
+  responseBody       String?
+  errorMessage       String?
+  attemptedAt        DateTime       @default(now())
+
+  job                Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  subscriber         Subscriber     @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_attempts")
+}
