@@ -19,5 +19,20 @@ services:
     ports:
       - "6379:6379"
 
+  app:
+    build: .
+    container_name: webhook-pipeline-app
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/webhook_pipeline?schema=public&sslmode=disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
 volumes:
   postgres_data:
