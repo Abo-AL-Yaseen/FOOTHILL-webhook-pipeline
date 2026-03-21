@@ -1,6 +1,6 @@
 # Webhook-Driven Task Processing Pipeline
 
-A backend service inspired by a simplified Zapier-style workflow system.  
+A backend service inspired by a simplified Zapier-style workflow system.
 It accepts incoming webhooks, stores them as jobs, processes them asynchronously through a queue, and delivers the processed payload to subscribed endpoints with retry logic and delivery tracking.
 
 ---
@@ -19,6 +19,8 @@ It accepts incoming webhooks, stores them as jobs, processes them asynchronously
 - Health and readiness endpoints
 - Filtering for jobs, subscribers, and delivery attempts
 - Clear `404 Not Found` and `409 Conflict` error handling in key APIs
+- Full application startup with Docker Compose
+- GitHub Actions CI for build verification
 
 ---
 
@@ -31,6 +33,7 @@ It accepts incoming webhooks, stores them as jobs, processes them asynchronously
 - BullMQ
 - Docker Compose
 - pnpm
+- GitHub Actions
 - Postman for API testing
 
 ---
@@ -160,21 +163,33 @@ PORT=3000
 
 ---
 
-## Running Infrastructure
+## Running with Docker Compose
 
-Start PostgreSQL and Redis:
+Start the full application stack:
 
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
-Stop Redis for readiness testing:
+This starts:
+
+- PostgreSQL
+- Redis
+- NestJS application
+
+To stop everything:
+
+```bash
+docker compose down
+```
+
+To stop Redis for readiness testing:
 
 ```bash
 docker compose stop redis
 ```
 
-Start Redis again:
+To start Redis again:
 
 ```bash
 docker compose start redis
@@ -214,7 +229,21 @@ pnpm prisma migrate reset
 
 ## Running the App
 
-Development mode:
+### Option 1: Run the full stack with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+### Option 2: Run locally for development
+
+First start PostgreSQL and Redis:
+
+```bash
+docker compose up -d postgres redis
+```
+
+Then run the NestJS app locally:
 
 ```bash
 pnpm run start:dev
@@ -501,10 +530,10 @@ This project was tested manually using Postman with flows including:
 ## Future Improvements
 
 - Add pagination to list endpoints
-- Add CI with GitHub Actions
 - Add automated tests for workers and delivery behavior
 - Add summary/statistics endpoints
-- Add full Docker setup for the NestJS app itself
+- Add authentication and authorization for management APIs
+- Add structured logging and monitoring
 
 ---
 
